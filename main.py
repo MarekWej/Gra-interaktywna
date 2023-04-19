@@ -17,6 +17,7 @@ class Physic:
         self.hight = height  # wysokość
         self.previous_x = x
         self.previous_y = y
+        self.jumping = False                            #czy postać skacze
         self.hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.hight)
 
     def physic_tick(self, beams):
@@ -26,9 +27,20 @@ class Physic:
         self.hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.hight) # odświeżanie hitboxów
         for beam in beams:
             if beam.hitbox.colliderect(self.hitbox):   #cofanie obiektu do miejsca z poprzedniej klatki
-                #self.x_cord = self.previous_x
-                self.y_cord = self.previous_y
-                self.ver_velocity = 0
+                if self.x_cord + self.width >= beam.x_cord + 1 > self.previous_x + self.width:  #kolizja z prawej strony
+                    self.x_cord = self.previous_x
+                    self.hor_velocity = 0
+                if self.x_cord <= beam.x_cord + beam.width - 1 < self.previous_x:  # kolizja z lewej strony
+                    self.x_cord = self.previous_x
+                    self.hor_velocity = 0
+                if self.y_cord + self.hight >= beam.y_cord + 1 > self.previous_y + self.hight:
+                    self.y_cord = self.previous_y
+                    self.ver_velocity = 0
+                    self.jumping = False
+                if self.y_cord <= beam.x_cord + beam.width - 1 < self.previous_y:
+                    self.y_cord = self.previous_y
+                    self.ver_velocity = 0
+
 
         self.previous_x = self.x_cord
         self.previous_y = self.y_cord
@@ -47,6 +59,9 @@ class Player(Physic):
             self.hor_velocity -= self.acc
         if keys[pygame.K_d] and self.hor_velocity < self.max_vel:
             self.hor_velocity += self.acc
+        if keys[pygame.K_SPACE] and self.jumping is False:
+            self.ver_velocity -= 15
+            self.jumping = True
         if not (keys[pygame.K_d] or keys[pygame.K_a]):
             if self.hor_velocity > 0:
                 self.hor_velocity -= self.acc
@@ -90,7 +105,9 @@ def main():
     clock = 0
     background = pygame.image.load("tło.png")
     beams =[
-        Beam(7,563,1200,60)
+        Beam(7,563,1200,60),
+        Beam(200,490,20,100),
+        Beam(500,490,30,120)
     ]
     while run:
         clock += pygame.time.Clock().tick(60)/1000        #maks 60 fps
