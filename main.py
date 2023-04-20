@@ -81,25 +81,32 @@ class Player(Physic):
             elif self.hor_velocity < 0:
                 self.hor_velocity += self.acc
 
-    def draw(self):
+    def draw(self, window, background_width):
+        if background_width - resolution[0] / 2 > self.x_cord >= resolution[0] / 2:
+            x_screen = resolution[0] / 2
+        elif self.x_cord >= background_width - resolution[0] / 2 :
+            x_screen = self.x_cord - background_width + resolution[0]
+        else:
+            x_screen = self.x_cord
+
         if self.jumping:
             if self.direction == 0:
-                window.blit(self.jump_left_img, (self.x_cord, self.y_cord))
+                window.blit(self.jump_left_img, (x_screen, self.y_cord))
             elif self.direction == 1:
-                window.blit(self.jump_right_img, (self.x_cord, self.y_cord))
+                window.blit(self.jump_right_img, (x_screen, self.y_cord))
         elif self.hor_velocity != 0:
             if self.direction == 0:
-                window.blit(self.walk_left_img[floor(self.walk_index)], (self.x_cord, self.y_cord))
+                window.blit(self.walk_left_img[floor(self.walk_index)], (x_screen, self.y_cord))
             elif self.direction == 1:
-                window.blit(self.walk_right_img[floor(self.walk_index)], (self.x_cord, self.y_cord))
+                window.blit(self.walk_right_img[floor(self.walk_index)], (x_screen, self.y_cord))
             self.walk_index += 1
             if self.walk_index > 5:
                 self.walk_index = 0
         else:
             if self.direction == 0:
-                window.blit(self.stand_left_img,(self.x_cord, self.y_cord))
+                window.blit(self.stand_left_img,(x_screen, self.y_cord))
             elif self.direction == 1:
-                window.blit(self.stand_right_img, (self.x_cord, self.y_cord))
+                window.blit(self.stand_right_img, (x_screen, self.y_cord))
 
 
 
@@ -110,8 +117,8 @@ class Beam:
         self.width = width
         self.height = height
         self.hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.height)
-    def draw(self, window):
-        pygame.draw.rect(window, (128, 128, 128), self.hitbox)
+    def draw(self, window , background_x):
+        pygame.draw.rect(window, (128, 128, 128), (self.x_cord + background_x, self.y_cord, self.width, self.height))
 
 '''class Cash:
     def __init__(self):
@@ -132,9 +139,15 @@ class Background:
         self.x_cord = 0
         self.y_cord = 0
         self.image = pygame.image.load('scrolling.png')
+        self.width = self.image.get_width()
 
-    def tick(self):
-        pass
+    def tick(self,player):
+        if self.width - resolution[0] / 2 > player.x_cord >= resolution[0] / 2:
+            self.x_cord -= player.hor_velocity
+        elif player.x_cord >= self.width - resolution[0] / 2:
+            self.x_cord = - self.width + resolution[0]
+        else:
+            self.x_cord = 0
 
     def draw(self, window):
         window.blit(self.image, (self.x_cord, self.y_cord))
@@ -160,12 +173,12 @@ def main():
         keys = pygame.key.get_pressed()  # Tworzymy ruch poprzez strzałki na klawiaturze
 
         player.tick(keys, beams)
-        background.tick()
+        background.tick(player)
         background.draw(window)
 
-        player.draw()
+        player.draw(window, background.width)
         for beam in beams:
-            beam.draw(window)
+            beam.draw(window, background.x_cord)
 
         pygame.display.update()  # odświeżamy obraz
 
