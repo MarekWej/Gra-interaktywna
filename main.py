@@ -3,7 +3,8 @@ from random import randint
 from math import floor
 
 pygame.init()  # inicjacja
-window = pygame.display.set_mode((1280, 720))
+resolution = (1280, 720)
+window = pygame.display.set_mode(resolution)
 
 
 class Physic:
@@ -126,18 +127,30 @@ class Beam:
 
     def draw(self):
         window.blit(self.image,(self.x_cord,self.y_cord))'''
+class Background:
+    def __init__(self):
+        self.x_cord = 0
+        self.y_cord = 0
+        self.image = pygame.image.load('scrolling.png')
+
+    def tick(self):
+        pass
+
+    def draw(self, window):
+        window.blit(self.image, (self.x_cord, self.y_cord))
+
 
 
 def main():
     global keys
     run = True
     player = Player()
+    background = Background()
     clock = 0
-    background = pygame.image.load("tło.png")
     beams =[
-        Beam(7,563,1200,60),
-        Beam(200,490,20,100),
-        Beam(500,490,30,120)
+        Beam(0,720,2217,60),
+        Beam(200,640,20,100),
+        Beam(500,640,30,120)
     ]
     while run:
         clock += pygame.time.Clock().tick(60)/1000        #maks 60 fps
@@ -147,10 +160,9 @@ def main():
         keys = pygame.key.get_pressed()  # Tworzymy ruch poprzez strzałki na klawiaturze
 
         player.tick(keys, beams)
+        background.tick()
+        background.draw(window)
 
-
-
-        window.blit(background, (0, 0))         # kolor tła
         player.draw()
         for beam in beams:
             beam.draw(window)
