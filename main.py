@@ -11,6 +11,9 @@ window = pygame.display.set_mode(resolution)
 def level_one():
     global keys
     run = True
+    pause = False
+    pause_image = pygame.font.Font.render(pygame.font.SysFont("", 90), "Pauza", True, (0,0,0))
+
     player = Player()
     background = Background()
     clock = 0
@@ -24,7 +27,14 @@ def level_one():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:   # jeśli gracz zamknie okno
                 run = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pause = not pause
         keys = pygame.key.get_pressed()  # Tworzymy ruch poprzez strzałki na klawiaturze
+
+        if pause:
+            window.blit(pause_image, (500, 300))
+            pygame.display.update()
+            continue
 
         player.tick(keys, beams)
         background.tick(player)
@@ -45,7 +55,7 @@ def main():
     while run:
         clock += pygame.time.Clock().tick(60)/1000        #maks 60 fps
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:   # jeśli gracz zamknie okno
+            if event.type == pygame.QUIT:                 #jeśli gracz zamknie okno
                 run = False
         if play_button.tick():
             level_one()

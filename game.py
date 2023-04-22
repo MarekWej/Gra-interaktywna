@@ -73,11 +73,11 @@ class button:
 class Player(Physic):
     def __init__(self):
         self.stand_right_img = pygame.image.load("john.png")
-        self.stand_left_img = pygame.transform.flip(pygame.image.load("john.png"), True, False)        #odwracanie postaci
-        width = self.stand_right_img.get_width()                                                        #szerokość
+        self.stand_left_img = pygame.transform.flip(pygame.image.load("john.png"), True, False)          #odwracanie postaci
+        width = self.stand_right_img.get_width()                                                         #szerokość
         height = self.stand_right_img.get_height()                                                       #wysokość
         super().__init__(0, 450, width, height,  0.5, 5)
-        self.jump_right_img = pygame.image.load('jump.png')                                             #skok
+        self.jump_right_img = pygame.image.load('jump.png')                                              #skok
         self.jump_left_img = pygame.transform.flip(pygame.image.load('jump.png'), True, False)
         self.walk_right_img = [pygame.image.load(f'walk/klatka0{x}.png') for x in range(1, 7)]
         self.walk_left_img = [pygame.transform.flip(pygame.image.load(f'walk/klatka0{x}.png'), True, False) for x in range(1, 7)]
@@ -86,7 +86,7 @@ class Player(Physic):
 
 
 
-    def tick(self, keys, beams):                                   #wykonuje się raz na powtórznie pętli
+    def tick(self, keys, beams):                                                                        #wykonuje się raz na powtórznie pętli
         self.physic_tick(beams)
         if keys[pygame.K_a] and self.hor_velocity > self.max_vel * -1:
             self.hor_velocity -= self.acc
