@@ -68,6 +68,64 @@ class button:
         else:
             window.blit(self.button_image,(self.x_cord, self.y_cord))
 
+class TextInput:
+    def __init__(self,x , y, width, height, maxlen = -1, placeholder = ""):
+        self.x_cord = x
+        self.y_cord = y
+        self.width = width
+        self.height = height
+        self.font = pygame.font.SysFont("Field", 63)
+        self.text = ""
+        self.font_image = pygame.font.Font.render(self.font, self.text, True, (0, 0, 0))
+        self.placeholder = placeholder
+        self.placeholder_img = pygame.font.Font.render(self.font,  placeholder, True, (100,100,100))
+        self.maxlen = maxlen
+        self.isactive = False
+        self.cursor = pygame.rect.Rect(self.x_cord + 5, self.y_cord + 5, 2, 40)
+        self.cursor_visibility = True
+
+    def tick(self, clock, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN:                    #jeżeli jakiś klawisz zostanie naciśnięty
+                if event.key == pygame.K_RETURN:                #jeżeli enter zostanie naciśnięty
+                    return self.text
+                elif event.key == pygame.K_BACKSPACE:           #jeżeli backspace zostanie naciśnięty
+                    self.text = self.text[: -1]                 #usuwa ostatni krok
+                elif len(self.text) < self.maxlen or self.maxlen == -1:
+                    if self.isactive and event.unicode.isprintable():
+                        self.text += event.unicode
+
+                self.font_image = pygame.font.Font.render(self.font, self.text, True, (0, 0, 0))
+                text_x = self.font_image.get_width()
+                self.cursor = pygame.rect.Rect(self.x_cord + 5 + text_x, self.y_cord + 5, 2, 40)
+
+        if round(clock) % 2 == 0:
+            self.cursor_visibility = True
+        else:
+            self.cursor_visibility = False
+
+
+        if pygame.mouse.get_pressed(3)[0]:                      #jeśli zostanie naciśnięty lewy przycisk myszy
+            if pygame.rect.Rect(self.x_cord, self.y_cord, self.width,
+                                self.height). collidepoint(pygame.mouse.get_pos()):
+                self.isactive = True
+            else:
+                self.isactive = False
+    def draw(self, window):
+        pygame.draw.rect(window, (4 ,207, 222),
+                         (self.x_cord -4, self.y_cord -4, self.width +8,self.height +8),
+                         border_radius= 45)
+        pygame.draw.rect(window, (255, 255, 255),
+                         (self.x_cord, self.y_cord, self.width, self.height),
+                         border_radius=45)
+        if self.text:
+
+            window.blit(self.font_image, (self.x_cord + 5, self.y_cord + 5))
+        else:
+            window.blit(self.placeholder_img, (self.x_cord + 5, self.y_cord + 5))
+
+        if self.cursor_visibility:
+            pygame.draw.rect(window, (90,90,90), self.cursor)
 
 
 class Player(Physic):

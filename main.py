@@ -51,12 +51,18 @@ def main():
     clock = 0
     background = pygame.image.load('menu.png')
     play_button = button(400, 500, "button.png")
-
+    textinput = TextInput(490,400,300,50, placeholder= "wpisz login")
+    #textinput2 = TextInput(300, 100, 150, 40)
     while run:
         clock += pygame.time.Clock().tick(60)/1000        #maks 60 fps
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:                 #jeśli gracz zamknie okno
                 run = False
+        content = textinput.tick(clock, events)
+        #textinput2.tick(events)
+        if content is not None:
+            print(f"wprowadzona wiadomość: {content}")
         if play_button.tick():
             level_one()
 
@@ -64,6 +70,8 @@ def main():
 
         window.blit(background,(0,0))
         play_button.draw(window)
+        textinput.draw(window)
+        #textinput2.draw(window)
         pygame.display.update()
 
 
