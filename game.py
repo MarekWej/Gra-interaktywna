@@ -50,6 +50,35 @@ class Physic:
 
 
 
+class Health:
+    def __init__(self, max_health = 100):
+        self.health = max_health
+        self.max_health = max_health                #ilość punktów życia
+        self.alive = True                           #czy postać żyje
+        self.last_damage = 0                        #czas od ostatnich obrażenień
+
+
+    def health_tick(self, deal_tm):
+        self.last_damage += deal_tm
+
+    def dealt_damage(self, damage, hit_speed):
+        if  self.last_damage > hit_speed:
+            self.health -= damage
+            self.last_damage = 0
+        if self.health <= 0:
+            self.health = 0
+            self.alive = False
+
+    def draw_health(self, window, x, y, max_width, height):
+        percent_width = self.health / self.max_health
+        width = round(max_width * percent_width)
+        if self.health > 30:
+            color = (30, 255, 30)
+        else:
+            color = (255,30,30)
+        pygame.draw.rect(window, (30,30,30), (x, y, max_width, height))
+        pygame.draw.rect(window,color, (x, y, width, height))
+
 class button:
     def __init__(self, x_cord, y_cord, file_name):
         self.x_cord = x_cord
@@ -129,13 +158,14 @@ class TextInput:
             pygame.draw.rect(window, (90,90,90), self.cursor)
 
 
-class Player(Physic):
+class Player(Physic, Health):
     def __init__(self):
         self.stand_right_img = pygame.image.load("john.png")
         self.stand_left_img = pygame.transform.flip(pygame.image.load("john.png"), True, False)          #odwracanie postaci
         width = self.stand_right_img.get_width()                                                         #szerokość
         height = self.stand_right_img.get_height()                                                       #wysokość
-        super().__init__(0, 450, width, height,  0.5, 5)
+        Health.__init__(self, 100)
+        Physic.__init__(self,0, 450, width, height,  0.5, 5)
         self.jump_right_img = pygame.image.load('jump.png')                                              #skok
         self.jump_left_img = pygame.transform.flip(pygame.image.load('jump.png'), True, False)
         self.walk_right_img = [pygame.image.load(f'walk/klatka0{x}.png') for x in range(1, 7)]
@@ -146,8 +176,11 @@ class Player(Physic):
 
 
 
-    def tick(self, keys, beams):                                                                        #wykonuje się raz na powtórznie pętli
+    def tick(self, keys, beams, delta_tm):                                                                        #wykonuje się raz na powtórznie pętli
         self.physic_tick(beams)
+        self.health_tick(delta_tm)
+        if not self.alive:
+            return
         if keys[pygame.K_a] and self.hor_velocity > self.max_vel * -1:
             self.hor_velocity -= self.acc
         if keys[pygame.K_d] and self.hor_velocity < self.max_vel:
@@ -172,6 +205,8 @@ class Player(Physic):
             x_screen = self.x_cord - background_width + resolution[0]
         else:
             x_screen = self.x_cord
+
+        self.draw_health(window, x_screen, self. y_cord - 15, self.width, 10)
 
         if self.jumping:
             if self.direction == 0:
@@ -217,6 +252,8 @@ class Enemy(Physic):
 
     def tick(self, beams, player):
         self.physic_tick(beams)
+        if self.hitbox.colliderect(player.hitbox):
+            player.dealt_damage(10, 0.5)                #10 zadanych obrażeń w ciągu 0.5 sek
         if not self.hitbox.colliderect(player.hitbox):
             if self.y_cord > player.y_cord + 15:
                 self.go_up()

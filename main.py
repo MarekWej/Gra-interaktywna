@@ -23,7 +23,8 @@ def level_one():
         Beam(500,640,30,120)
     ]
     while run:
-        clock += pygame.time.Clock().tick(60)/1000        #maks 60 fps
+        delta = pygame.time.Clock().tick(60) / 1000        #maks 60 fps
+        clock += delta
         for event in pygame.event.get():
             if event.type == pygame.QUIT:   # jeśli gracz zamknie okno
                 run = False
@@ -36,7 +37,7 @@ def level_one():
             pygame.display.update()
             continue
 
-        player.tick(keys, beams)
+        player.tick(keys, beams, delta)
         for enemy in enemys:
             enemy.tick(beams, player)
         background.tick(player)
