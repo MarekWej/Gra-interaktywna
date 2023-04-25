@@ -13,8 +13,8 @@ def level_one():
     run = True
     pause = False
     pause_image = pygame.font.Font.render(pygame.font.SysFont("", 90), "Pauza", True, (0,0,0))
-
     player = Player()
+    enemys = [Enemy(300,400), Enemy(150,400), Enemy(200,400), Enemy(100,400)]
     background = Background()
     clock = 0
     beams =[
@@ -37,10 +37,13 @@ def level_one():
             continue
 
         player.tick(keys, beams)
+        for enemy in enemys:
+            enemy.tick(beams, player)
         background.tick(player)
         background.draw(window)
-
         player.draw(window, background.width)
+        for enemy in enemys:
+            enemy.draw(window, background.x_cord)
         for beam in beams:
             beam.draw(window, background.x_cord)
 

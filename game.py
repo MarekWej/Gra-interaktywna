@@ -21,9 +21,10 @@ class Physic:
         self.previous_y = y
         self.jumping = False                            #czy postać skacze
         self.hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.height)
+        self.gravity = 0.7
 
     def physic_tick(self, beams):
-        self.ver_velocity += 0.7
+        self.ver_velocity += self.gravity
         self.x_cord += self.hor_velocity
         self.y_cord += self.ver_velocity
         self.hitbox = pygame.Rect(self.x_cord, self.y_cord, self.width, self.height) # odświeżanie hitboxów
@@ -144,6 +145,7 @@ class Player(Physic):
 
 
 
+
     def tick(self, keys, beams):                                                                        #wykonuje się raz na powtórznie pętli
         self.physic_tick(beams)
         if keys[pygame.K_a] and self.hor_velocity > self.max_vel * -1:
@@ -189,6 +191,52 @@ class Player(Physic):
                 window.blit(self.stand_left_img,(x_screen, self.y_cord))
             elif self.direction == 1:
                 window.blit(self.stand_right_img, (x_screen, self.y_cord))
+
+
+
+class Enemy(Physic):
+    def __init__(self, x , y):
+        self.image = pygame.image.load('Edgar2.png')
+        width, height = self.image.get_size()
+        
+        super().__init__(x, y, width, height, 1, 3)
+        self.gravity = 0.2
+
+    def go_left(self):
+        if -self.hor_velocity < self.max_vel:
+            self.hor_velocity -= self.acc
+
+    def go_right(self):
+        if self.hor_velocity < self.max_vel:
+            self.hor_velocity += self.acc
+
+    def go_up(self):
+        if -self.ver_velocity < self.max_vel:
+            self.ver_velocity -= self.gravity + self.acc
+
+
+    def tick(self, beams, player):
+        self.physic_tick(beams)
+        if not self.hitbox.colliderect(player.hitbox):
+            if self.y_cord > player.y_cord + 15:
+                self.go_up()
+            if self.x_cord > player.x_cord:
+                self.go_left()
+            elif self.x_cord < player.x_cord:
+                self.go_right()
+            if abs(self.x_cord - player.x_cord) > 40:
+                helphitbox = pygame.rect.Rect(self.x_cord - 15, self.y_cord + 20, self.width + 30, self.height -25 )
+                for beam in beams:
+                    if helphitbox.colliderect(beam.hitbox):
+                        self.go_up()
+            if randint(0, 30) == 15:
+                self.go_up()
+
+
+    def draw(self, window, world_x):
+        window.blit(self.image, (self.x_cord + world_x, self.y_cord))
+
+
 
 
 
