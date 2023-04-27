@@ -14,7 +14,7 @@ def level_one():
     pause = False
     pause_image = pygame.font.Font.render(pygame.font.SysFont("", 90), "Pauza", True, (0,0,0))
     player = Player()
-    enemys = [Enemy(300,400), Enemy(150,400), Enemy(200,400), Enemy(100,400)]
+    enemy = Enemy(300,400)
     background = Background()
     clock = 0
     beams =[
@@ -37,14 +37,16 @@ def level_one():
             pygame.display.update()
             continue
 
-        player.tick(keys, beams, delta)
-        for enemy in enemys:
-            enemy.tick(beams, player)
+        player.tick(keys, beams, delta, [enemy, ])
+        enemy.tick(beams, player, delta)
+        if not enemy.alive:
+           enemy.go_up()
+
         background.tick(player)
+
         background.draw(window)
-        player.draw(window, background.width)
-        for enemy in enemys:
-            enemy.draw(window, background.x_cord)
+        player.draw(window, background)
+        enemy.draw(window, background.x_cord)
         for beam in beams:
             beam.draw(window, background.x_cord)
 

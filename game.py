@@ -1,10 +1,22 @@
 import pygame
 from random import randint
-from math import floor
+from math import floor, sqrt, degrees, asin
 
 resolution = (1280, 720)
 
+def degree(x_screen, y_screen, x_mouse, y_mouse):
+    x_side = x_screen - x_mouse
+    y_side = y_screen - y_mouse
+    triangle_long =sqrt(x_side**2 + y_side**2)
+    dg = degrees(asin(y_side / triangle_long))
+    if x_side > 0:
+        dg = -dg
+    return dg
 
+def centered_rotate(image, x, y, angle):
+    rotated_image = pygame.transform.rotate(image, angle)
+    new_rect = rotated_image.get_rect(center = image.get_rect(center =(x,y)).center)
+    return rotated_image, new_rect
 
 
 class Physic:
@@ -157,6 +169,76 @@ class TextInput:
         if self.cursor_visibility:
             pygame.draw.rect(window, (90,90,90), self.cursor)
 
+class Bullet(Physic):
+    def __init__(self, gun, speed, damage, x_side, y_side):
+        super().__init__(gun.x_cord, gun.y_cord, 3 ,2 ,0 ,speed)
+        self.gravity = 0.1
+        c_side = sqrt(x_side**2 + y_side**2)
+        step = c_side/speed
+        x_speed = x_side / step
+        y_speed = y_side / step
+        self.hor_velocity = x_speed
+        self.ver_velocity = y_speed
+        self.damage = damage
+        self.clock = 0
+        self.exists = 1
+    def tick(self, beams, delta, mobs):
+        self.physic_tick(beams)
+        self.clock += delta
+        if self.clock > 1:
+            self.exists = False
+        for mob in mobs:
+            if mob.hitbox.colliderect(self.hitbox):
+                mob.dealt_damage(self.damage, 0)
+                self.exists = False
+
+
+    def draw(self,window, world_x):
+        pygame.draw.rect(window,(242,0,20),(self.x_cord + world_x, self.y_cord, 5, 3))
+
+
+class Weapon:
+    def __init__(self, speed, damage):
+        self.x_cord = 0
+        self.y_cord = 0
+        self.speed = speed
+        self.damage = damage
+        self.bullets = []
+        self.image = pygame.image.load("ak47.png")
+        self.x_screen = 0
+        self.x_world = 0
+        self.clock = 1
+    def shoot(self):
+        if self.clock > 0.1:
+            self.clock = 0
+            x_mouse, y_mouse = pygame.mouse.get_pos()
+            x_side = x_mouse - self.x_screen - self.x_world
+            y_side = y_mouse - self.y_cord
+            self.bullets.append(Bullet(self, self.speed, self.damage, x_side, y_side))
+
+    def tick(self, beams, player, delta, mobs):
+        self.clock += delta
+        self.x_cord = player.x_cord
+        self.y_cord = player.y_cord
+        for bullet in self.bullets:
+            bullet.tick(beams, delta, mobs)
+            if not bullet.exists:
+                self.bullets.remove(bullet)
+
+    def draw(self, window, x_screen, world_x):
+        self.x_screen = x_screen
+        self.x_world = 0
+        for bullet in self.bullets:
+            bullet.draw(window, world_x)
+        angle = degree(x_screen + world_x, self.y_cord, *pygame.mouse.get_pos())
+        if pygame.mouse.get_pos()[0] - x_screen - world_x < 0:
+            image = pygame.transform.flip(self.image, True, False)
+        else:
+            image = self.image
+        to_blit = centered_rotate(image, x_screen + world_x + 30, self.y_cord + 35 ,angle)
+        window.blit(*to_blit)
+
+
 
 class Player(Physic, Health):
     def __init__(self):
@@ -173,14 +255,18 @@ class Player(Physic, Health):
         self.walk_index = 0
         self.direction = 1
 
+        self.weapon = Weapon(20,20)
 
 
 
-    def tick(self, keys, beams, delta_tm):                                                                        #wykonuje się raz na powtórznie pętli
+    def tick(self, keys, beams, delta_tm ,mobs):                                                                        #wykonuje się raz na powtórznie pętli
         self.physic_tick(beams)
         self.health_tick(delta_tm)
+        self.weapon.tick(beams,self, delta_tm, mobs)
         if not self.alive:
             return
+        if pygame.mouse.get_pressed(3)[0]: #jeśli gracz wciśnie lewy przycisk
+            self.weapon.shoot()
         if keys[pygame.K_a] and self.hor_velocity > self.max_vel * -1:
             self.hor_velocity -= self.acc
         if keys[pygame.K_d] and self.hor_velocity < self.max_vel:
@@ -198,15 +284,16 @@ class Player(Physic, Health):
             elif self.hor_velocity < 0:
                 self.hor_velocity += self.acc
 
-    def draw(self, window, background_width):
-        if background_width - resolution[0] / 2 > self.x_cord >= resolution[0] / 2:
+    def draw(self, window, background):
+        if background.width - resolution[0] / 2 > self.x_cord >= resolution[0] / 2:
             x_screen = resolution[0] / 2
-        elif self.x_cord >= background_width - resolution[0] / 2 :
-            x_screen = self.x_cord - background_width + resolution[0]
+        elif self.x_cord >= background.width - resolution[0] / 2 :
+            x_screen = self.x_cord - background.width + resolution[0]
         else:
             x_screen = self.x_cord
 
         self.draw_health(window, x_screen, self. y_cord - 15, self.width, 10)
+
 
         if self.jumping:
             if self.direction == 0:
@@ -226,15 +313,20 @@ class Player(Physic, Health):
                 window.blit(self.stand_left_img,(x_screen, self.y_cord))
             elif self.direction == 1:
                 window.blit(self.stand_right_img, (x_screen, self.y_cord))
+        self.weapon.draw(window, self.x_cord, background.x_cord)
 
 
 
-class Enemy(Physic):
+
+
+
+
+class Enemy(Physic, Health):
     def __init__(self, x , y):
         self.image = pygame.image.load('Edgar2.png')
         width, height = self.image.get_size()
-        
-        super().__init__(x, y, width, height, 1, 3)
+        Physic.__init__(self,x, y, width, height, 1, 3)
+        Health.__init__(self, 75)
         self.gravity = 0.2
 
     def go_left(self):
@@ -250,8 +342,9 @@ class Enemy(Physic):
             self.ver_velocity -= self.gravity + self.acc
 
 
-    def tick(self, beams, player):
+    def tick(self, beams, player, delta):
         self.physic_tick(beams)
+        self.health_tick(delta)
         if self.hitbox.colliderect(player.hitbox):
             player.dealt_damage(10, 0.5)                #10 zadanych obrażeń w ciągu 0.5 sek
         if not self.hitbox.colliderect(player.hitbox):
@@ -272,6 +365,7 @@ class Enemy(Physic):
 
     def draw(self, window, world_x):
         window.blit(self.image, (self.x_cord + world_x, self.y_cord))
+        self.draw_health(window, self.x_cord, self.y_cord - 15, self.width, 10)
 
 
 
